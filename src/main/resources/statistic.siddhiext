@@ -17,4 +17,4 @@
 #
 prob=org.wso2.siddhi.extension.statistic.ProbabilityAttributeAggregator
 sd=org.wso2.siddhi.extension.statistic.StandardDeviationExecutor
-zScore=org.wso2.siddhi.extension.statistic.ZScoreAggregator
+zScore=org.wso2.siddhi.extension.statistic.ZScoreExecutor
