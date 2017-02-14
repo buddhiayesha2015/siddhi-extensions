@@ -3,77 +3,58 @@ package org.wso2.siddhi.extension.statistic;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.exception.OperationNotSupportedException;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
-import org.wso2.siddhi.core.query.selector.attribute.aggregator.AttributeAggregator;
+import org.wso2.siddhi.core.executor.function.FunctionExecutor;
 import org.wso2.siddhi.query.api.definition.Attribute;
 
 /**
- * Created by buddhi on 12/31/16.
+ * Created by Buddhi on 2/15/2017.
  */
-public class ZScoreAggregator extends AttributeAggregator {
 
-    private ZScoreAggregator zScoreAggregator;
+public class ZScoreExecutor extends FunctionExecutor {
 
-    /**
-     * The initialization method for AttributeAggregator
-     *
-     * @param attributeExpressionExecutors are the executors of each attributes in the function
-     * @param executionPlanContext         Execution plan runtime context
-     */
-    protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
+    private ZScoreExecutor zScoreExecutor;
+
+    @Override
+    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
 
         if (attributeExpressionExecutors.length != 1) {
-            throw new OperationNotSupportedException("Z Score aggregator has to have exactly 1 parameter, currently " +
+            throw new OperationNotSupportedException("Z-Score Executor has to have exactly 1 parameter, currently " +
                     attributeExpressionExecutors.length + " parameters provided");
         }
 
         Attribute.Type vType = attributeExpressionExecutors[0].getReturnType();
         switch (vType) {
             case FLOAT:
-                zScoreAggregator = new ZScoreAggregatorFloat();
+                zScoreExecutor = new ZScoreExecutorFloat();
                 break;
             case INT:
-                zScoreAggregator = new ZScoreAggregatorInt();
+                zScoreExecutor = new ZScoreExecutorInt();
                 break;
             case LONG:
-                zScoreAggregator = new ZScoreAggregatorLong();
+                zScoreExecutor = new ZScoreExecutorLong();
                 break;
             case DOUBLE:
-                zScoreAggregator = new ZScoreAggregatorDouble();
+                zScoreExecutor = new ZScoreExecutorDouble();
                 break;
             default:
-                throw new OperationNotSupportedException("Z Score not supported for " + vType);
+                throw new OperationNotSupportedException("Z-Score Executor not supported for " + vType);
         }
 
     }
 
     @Override
+    protected Object execute(Object[] objects) {
+        return new IllegalStateException("Z-Score Executor cannot process");
+    }
+
+    @Override
+    protected Object execute(Object object) {
+        return zScoreExecutor.execute(object);
+    }
+
+    @Override
     public Attribute.Type getReturnType() {
-        return zScoreAggregator.getReturnType();
-    }
-
-    @Override
-    public Object processAdd(Object data) {
-        return zScoreAggregator.processAdd(data);
-    }
-
-    @Override
-    public Object processAdd(Object[] data) {
-        return new IllegalStateException("Z Score cannot process");
-    }
-
-    @Override
-    public Object processRemove(Object data) {
-        return zScoreAggregator.processRemove(data);
-    }
-
-    @Override
-    public Object processRemove(Object[] data) {
-        return new IllegalStateException("Z Score cannot process");
-    }
-
-    @Override
-    public Object reset() {
-        return zScoreAggregator.reset();
+        return zScoreExecutor.getReturnType();
     }
 
     @Override
@@ -88,7 +69,7 @@ public class ZScoreAggregator extends AttributeAggregator {
 
     @Override
     public Object[] currentState() {
-        return null;
+        return new Object[0];
     }
 
     @Override
@@ -97,19 +78,18 @@ public class ZScoreAggregator extends AttributeAggregator {
     }
 
 
-    private class ZScoreAggregatorDouble extends ZScoreAggregator {
+    private class ZScoreExecutorDouble extends ZScoreExecutor {
 
         private final Attribute.Type type = Attribute.Type.DOUBLE;
         private double sum=0.0, sumOfSquares=0.0;
         private long eventCounter=0;
-
 
         public Attribute.Type getReturnType() {
             return type;
         }
 
         @Override
-        public Object processAdd(Object data) {
+        public Object execute(Object data) {
 
             double inputValue = (Double) data;
             eventCounter++;
@@ -123,35 +103,27 @@ public class ZScoreAggregator extends AttributeAggregator {
         }
 
         @Override
-        public Object processRemove(Object obj) {
-            return null;
+        public void restoreState(Object[] objects) {
+
         }
 
-        @Override
-        public Object reset() {
-            sum=0.0;
-            sumOfSquares=0.0;
-            eventCounter=0;
-            return 0.0;
-        }
 
     }
 
-    private class ZScoreAggregatorLong extends ZScoreAggregator {
+    private class ZScoreExecutorLong extends ZScoreExecutor {
 
         private final Attribute.Type type = Attribute.Type.DOUBLE;
         private double sum=0.0, sumOfSquares=0.0;
         private long eventCounter=0;
-
 
         public Attribute.Type getReturnType() {
             return type;
         }
 
         @Override
-        public Object processAdd(Object data) {
+        public Object execute(Object data) {
 
-            double inputValue = (Long) data;
+            long inputValue = (Long) data;
             eventCounter++;
             sum += inputValue;
             sumOfSquares += inputValue*inputValue;
@@ -163,35 +135,27 @@ public class ZScoreAggregator extends AttributeAggregator {
         }
 
         @Override
-        public Object processRemove(Object obj) {
-            return null;
+        public void restoreState(Object[] objects) {
+
         }
 
-        @Override
-        public Object reset() {
-            sum=0.0;
-            sumOfSquares=0.0;
-            eventCounter=0;
-            return 0.0;
-        }
 
     }
 
-    private class ZScoreAggregatorInt extends ZScoreAggregator {
+    private class ZScoreExecutorInt extends ZScoreExecutor {
 
         private final Attribute.Type type = Attribute.Type.DOUBLE;
         private double sum=0.0, sumOfSquares=0.0;
         private long eventCounter=0;
-
 
         public Attribute.Type getReturnType() {
             return type;
         }
 
         @Override
-        public Object processAdd(Object data) {
+        public Object execute(Object data) {
 
-            double inputValue = (Integer) data;
+            int inputValue = (Integer) data;
             eventCounter++;
             sum += inputValue;
             sumOfSquares += inputValue*inputValue;
@@ -203,35 +167,27 @@ public class ZScoreAggregator extends AttributeAggregator {
         }
 
         @Override
-        public Object processRemove(Object obj) {
-            return null;
+        public void restoreState(Object[] objects) {
+
         }
 
-        @Override
-        public Object reset() {
-            sum=0.0;
-            sumOfSquares=0.0;
-            eventCounter=0;
-            return 0.0;
-        }
 
     }
 
-    private class ZScoreAggregatorFloat extends ZScoreAggregator {
+    private class ZScoreExecutorFloat extends ZScoreExecutor {
 
         private final Attribute.Type type = Attribute.Type.DOUBLE;
         private double sum=0.0, sumOfSquares=0.0;
         private long eventCounter=0;
-
 
         public Attribute.Type getReturnType() {
             return type;
         }
 
         @Override
-        public Object processAdd(Object data) {
+        public Object execute(Object data) {
 
-            double inputValue = (Float) data;
+            float inputValue = (Float) data;
             eventCounter++;
             sum += inputValue;
             sumOfSquares += inputValue*inputValue;
@@ -243,18 +199,11 @@ public class ZScoreAggregator extends AttributeAggregator {
         }
 
         @Override
-        public Object processRemove(Object obj) {
-            return null;
+        public void restoreState(Object[] objects) {
+
         }
 
-        @Override
-        public Object reset() {
-            sum=0.0;
-            sumOfSquares=0.0;
-            eventCounter=0;
-            return 0.0;
-        }
 
     }
-    
+
 }
