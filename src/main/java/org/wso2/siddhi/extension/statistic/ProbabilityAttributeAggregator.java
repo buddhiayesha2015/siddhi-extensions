@@ -99,12 +99,12 @@ public class ProbabilityAttributeAggregator extends AttributeAggregator {
 
     @Override
     public void start() {
-        //Nothing to start
+        // Nothing to start
     }
 
     @Override
     public void stop() {
-        //nothing to stop
+        // Nothing to stop
     }
 
     @Override
