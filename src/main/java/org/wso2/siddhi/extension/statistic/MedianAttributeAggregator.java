@@ -1,6 +1,7 @@
 package org.wso2.siddhi.extension.statistic;
 
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
+import org.wso2.siddhi.core.exception.OperationNotSupportedException;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.query.selector.attribute.aggregator.AttributeAggregator;
 import org.wso2.siddhi.query.api.definition.Attribute;
@@ -10,14 +11,40 @@ import java.util.*;
  */
 
 public class MedianAttributeAggregator extends AttributeAggregator {
+
+    private MedianAttributeAggregator medianAttributeAggregator;
+
     @Override
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
+
+        if (attributeExpressionExecutors.length != 4) {
+            throw new OperationNotSupportedException("Median aggregator has to have exactly 4 parameter, currently " +
+                    attributeExpressionExecutors.length + " parameters provided");
+        }
+
+        Attribute.Type vType = attributeExpressionExecutors[3].getReturnType();
+        switch (vType) {
+            case FLOAT:
+                medianAttributeAggregator = new MedianAttributeAggregatorFloat();
+                break;
+            case INT:
+                medianAttributeAggregator = new MedianAttributeAggregatorInt();
+                break;
+            case LONG:
+                medianAttributeAggregator = new MedianAttributeAggregatorLong();
+                break;
+            case DOUBLE:
+                medianAttributeAggregator = new MedianAttributeAggregatorDouble();
+                break;
+            default:
+                throw new OperationNotSupportedException("Median not supported for " + vType);
+        }
 
     }
 
     @Override
     public Attribute.Type getReturnType() {
-        return null;
+        return medianAttributeAggregator.getReturnType();
     }
 
     @Override
@@ -69,14 +96,17 @@ public class MedianAttributeAggregator extends AttributeAggregator {
 
     private class MedianAttributeAggregatorDouble extends MedianAttributeAggregator {
 
-        private ArrayList<Object> processList=new ArrayList<Object>();
+        private final Attribute.Type type = Attribute.Type.DOUBLE;
+        private ArrayList<Comparable> processList= new ArrayList<>();
+
+        public Attribute.Type getReturnType() {
+            return type;
+        }
 
         @Override
-        public Object processAdd(Object o) {
-            processList.add(o);
-            return processList.get(getMedian(processList));
-
-            return null;
+        public Object processAdd(Object data) {
+            processList.add((Double) data);
+            return (Double) processList.get((Integer) getMedian(processList));
         }
 
         @Override
@@ -84,9 +114,74 @@ public class MedianAttributeAggregator extends AttributeAggregator {
             return null;
         }
 
+    }
 
+    private class MedianAttributeAggregatorLong extends MedianAttributeAggregator {
+
+        private final Attribute.Type type = Attribute.Type.LONG;
+        private ArrayList<Comparable> processList= new ArrayList<>();
+
+        public Attribute.Type getReturnType() {
+            return type;
+        }
+
+        @Override
+        public Object processAdd(Object data) {
+            processList.add((Long) data);
+            return (Long) processList.get((Integer) getMedian(processList));
+        }
+
+        @Override
+        public Object processRemove(Object o) {
+            return null;
+        }
 
     }
+
+    private class MedianAttributeAggregatorInt extends MedianAttributeAggregator {
+
+        private final Attribute.Type type = Attribute.Type.DOUBLE;
+        private ArrayList<Comparable> processList= new ArrayList<>();
+
+        public Attribute.Type getReturnType() {
+            return type;
+        }
+
+        @Override
+        public Object processAdd(Object data) {
+            processList.add((Integer) data);
+            return (Integer) processList.get((Integer) getMedian(processList));
+        }
+
+        @Override
+        public Object processRemove(Object o) {
+            return null;
+        }
+
+    }
+
+    private class MedianAttributeAggregatorFloat extends MedianAttributeAggregator {
+
+        private final Attribute.Type type = Attribute.Type.DOUBLE;
+        private ArrayList<Comparable> processList= new ArrayList<>();
+
+        public Attribute.Type getReturnType() {
+            return type;
+        }
+
+        @Override
+        public Object processAdd(Object data) {
+            processList.add((Float) data);
+            return (Float) processList.get((Integer) getMedian(processList));
+        }
+
+        @Override
+        public Object processRemove(Object o) {
+            return null;
+        }
+
+    }
+
     //start code
     //median of medians method
     public static Comparable getMedian(ArrayList<Comparable> list) {
@@ -146,8 +241,7 @@ public class MedianAttributeAggregator extends AttributeAggregator {
      * @param pos input position of pivot value
      * @return output position of pivot value
      */
-    private static int triage(ArrayList<Comparable> list, int lo, int hi,
-                              int pos) {
+    private static int triage(ArrayList<Comparable> list, int lo, int hi, int pos) {
         Comparable pivot = list.get(pos);
         int lo3 = lo;
         int hi3 = hi;
@@ -183,4 +277,6 @@ public class MedianAttributeAggregator extends AttributeAggregator {
         return lo3;
     }
     //end code
+
+
 }
